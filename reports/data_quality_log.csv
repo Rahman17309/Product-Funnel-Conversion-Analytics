@@ -1,0 +1,16 @@
+table,check,issue,action,rows_affected
+sessions,channel labels,14 raw labels for 7 channels (e.g. 'Paid Social' vs 'paid_social'),lower-case + underscores,4959
+sessions,missing device,device not captured (tracking script blocked),set to 'unknown' (kept — rows are still valid sessions),945
+sessions,duplicate session_id,primary key must be unique,drop duplicates,0
+events,timestamp format,two string formats in the export (ISO and DD/MM/YYYY),parse both formats explicitly,11288
+events,unparseable timestamps,timestamp could not be parsed,drop,0
+events,exact duplicate events,tracking pixel fired twice,drop exact duplicates,2386
+orders,duplicate order rows,same order exported twice,drop exact duplicates,20
+orders,QA test orders,"internal test orders (order_id 'TEST*', value Rs 1)",drop,35
+orders,negative order value,refunds mixed into orders,drop (none expected),0
+sessions,bot / crawler traffic,">= 15 product views within 60s, or page_load_ms = 0",exclude from all analysis,2000
+session_funnel,add_to_cart without product_view,stage skipped,assert = 0,0
+session_funnel,checkout_start without add_to_cart,stage skipped,assert = 0,0
+session_funnel,payment_attempt without checkout_start,stage skipped,assert = 0,0
+session_funnel,purchase without payment_attempt,stage skipped,assert = 0,0
+session_funnel,purchase events vs orders,every purchase event should have one order,assert = 0,0
