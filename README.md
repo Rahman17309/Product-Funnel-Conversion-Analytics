@@ -1,7 +1,7 @@
 # 🛒 Product Funnel & Conversion Rate Optimization
 
-> **Status:** 🚧 In progress: Day 1 of 3 complete (data quality, cleaning, EDA).
-> SQL deep-dive, A/B test, dashboard and final recommendations are coming next.
+> **Status:** 🚧 In progress: Day 2 of 3 complete (data quality, EDA, SQL deep-dive, A/B test, dashboard).
+> Final recommendations report coming next.
 
 An end-to-end analysis of an e-commerce conversion funnel: from raw, messy clickstream exports to
 a clear answer to the question every product and growth team asks:
@@ -29,7 +29,7 @@ turn into orders. Two-thirds of traffic is on mobile, and the product team has j
 
 ![Funnel](images/01_overall_funnel.png)
 
-## 🔍 Early findings (from EDA, to be tested in later notebooks)
+## 🔍 Findings so far
 
 | # | Finding | Evidence |
 |---|---|---|
@@ -43,6 +43,48 @@ turn into orders. Two-thirds of traffic is on mobile, and the product team has j
   <img src="images/03_device.png" width="49%"/>
   <img src="images/04_channel_quality.png" width="49%"/>
 </p>
+
+## 🧮 SQL deep-dive: what each fix is worth
+
+Seven DuckDB queries in [`/sql`](sql) (CTEs, `UNPIVOT`, window functions, `QUALIFY`, `QUANTILE_CONT`) segment the funnel and
+put a ₹ value on each lever, assuming we close **half** the gap to a realistic benchmark:
+
+| Priority | Lever | Est. extra revenue | Why |
+|---|---|---|---|
+| 1 | **Mobile checkout UX** | **~₹26 L / year** | Mobile cart→payment 31% vs 48% on desktop |
+| 2 | Page speed under 3s | ~₹11 L / year | CVR roughly halves above 3s on mobile *and* desktop |
+| 3 | Paid social landing pages | ~₹3 L / year | Weak only at the top of the funnel |
+| 4 | Card payment success | ~₹2.6 L / year | 80% card vs 90% UPI success |
+
+![Segment heatmap](images/08_segment_heatmap.png)
+
+> ⚠️ **A trap avoided:** conversion rose from ~2.4% to ~4.0% over the quarter, but the share of returning visitors rose from
+> 23% to 79% at the same time. A before/after comparison would wrongly credit the new checkout, so we used the A/B test instead.
+
+## 🧪 A/B test: one-page checkout
+
+| Check | Result |
+|---|---|
+| Sample ratio (50/50) | ✅ 50.2% variant, p = 0.43 |
+| Groups balanced (returning, device, channel, speed) | ✅ all p > 0.05 |
+| **Primary: session conversion** | **3.55% → 4.16% (+0.61 pp, +17%), 95% CI +0.25 to +0.98 pp, p ≈ 0.001** |
+| Mechanism: mobile checkout → payment | 61.6% → 70.1% (+8.4 pp), p < 0.001 |
+| Steps *before* checkout (built-in A/A check) | No significant change ✅ |
+| Guardrails: AOV, payment success | No significant change ✅ |
+| Regression-adjusted (device, visitor type, channel, speed) | Odds ratio 1.19 (1.08–1.32), p < 0.001 |
+| Power | Minimum detectable effect +0.52 pp; observed +0.61 pp |
+
+**Decision:** roll out to mobile now; roll out to desktop with a small holdout (desktop lift positive but not significant
+after a Bonferroni correction). Expected value at today's traffic: **~₹32 L / year** (range ₹13–51 L).
+
+![A/B test](images/11_ab_test_results.png)
+
+## 📊 Interactive dashboard
+
+[`dashboard/index.html`](dashboard/index.html) is a single file: download it and open it in any browser. It has KPI cards, a funnel you can
+filter by segment, device/channel comparison, A/B lift with confidence intervals, opportunity sizing and the weekly trend.
+
+<img src="images/12_dashboard.png" width="70%"/>
 
 ## 🧰 Tech stack
 
@@ -58,10 +100,16 @@ turn into orders. Two-thirds of traffic is on mobile, and the product team has j
 │   └── data_dictionary.md    # every column, funnel definition, metric formulas
 ├── notebooks/
 │   ├── 01_data_quality_and_cleaning.ipynb
-│   └── 02_exploratory_analysis.ipynb
+│   ├── 02_exploratory_analysis.ipynb
+│   ├── 03_sql_funnel_analysis.ipynb
+│   └── 04_ab_test_one_page_checkout.ipynb
+├── sql/                      # 00_setup_views + 7 analysis queries (DuckDB)
+├── dashboard/
+│   └── index.html            # interactive Plotly dashboard
 ├── src/
 │   ├── generate_data.py      # reproducible synthetic data generator
-│   └── clean.py              # cleaning pipeline + validation (auditable log)
+│   ├── clean.py              # cleaning pipeline + validation (auditable log)
+│   └── build_dashboard.py    # builds dashboard/index.html
 ├── reports/
 │   └── data_quality_log.csv  # every cleaning rule and rows affected
 ├── images/                   # charts used in this README
@@ -77,7 +125,11 @@ pip install -r requirements.txt
 
 python src/generate_data.py   # optional: regenerate raw data (already included)
 python src/clean.py           # builds data/processed/ + reports/data_quality_log.csv
-jupyter notebook notebooks/   # run 01 → 02
+python src/build_dashboard.py # builds dashboard/index.html
+jupyter notebook notebooks/   # run 01 → 04
+
+# or run any SQL file directly in the DuckDB CLI:
+duckdb -c ".read sql/00_setup_views.sql" -c ".read sql/07_opportunity_sizing.sql"
 ```
 
 ## 🧹 Data quality: what was fixed
@@ -99,7 +151,7 @@ Validation checks (all passing): no session skips a funnel stage; every purchase
 ## 🗓️ Roadmap
 
 - [x] **Day 1:** project setup, data dictionary, data-quality pipeline, EDA
-- [ ] **Day 2:** SQL funnel deep-dive (DuckDB), segment analysis, A/B test with significance, interactive dashboard
+- [x] **Day 2:** SQL funnel deep-dive (DuckDB), segment analysis, A/B test with significance, interactive dashboard
 - [ ] **Day 3:** ₹-impact sizing, recommendations report, final README
 
 ---
