@@ -1,7 +1,6 @@
 # 🛒 Product Funnel & Conversion Rate Optimization
 
-> **Status:** 🚧 In progress: Day 2 of 3 complete (data quality, EDA, SQL deep-dive, A/B test, dashboard).
-> Final recommendations report coming next.
+> **Status:** ✅ Complete · 📄 [Recommendations report](reports/recommendations.md) · 📊 [Live dashboard](https://rahman17309.github.io/work/funnel-dashboard.html) · 📝 [Case study](https://rahman17309.github.io/work/product-funnel.html)
 
 An end-to-end analysis of an e-commerce conversion funnel: from raw, messy clickstream exports to
 a clear answer to the question every product and growth team asks:
@@ -29,7 +28,7 @@ turn into orders. Two-thirds of traffic is on mobile, and the product team has j
 
 ![Funnel](images/01_overall_funnel.png)
 
-## 🔍 Findings so far
+## 🔍 Key findings
 
 | # | Finding | Evidence |
 |---|---|---|
@@ -79,9 +78,23 @@ after a Bonferroni correction). Expected value at today's traffic: **~₹32 L / 
 
 ![A/B test](images/11_ab_test_results.png)
 
+## ✅ Recommendations
+
+Full report with assumptions, risks and next experiments: **[reports/recommendations.md](reports/recommendations.md)**
+
+| # | Recommendation | Est. value / year | Confidence |
+|---|---|---|---|
+| 1 | **Roll out the one-page checkout**: 100% of mobile now, desktop with a 10% holdout | **~₹32 L** (₹13–51 L) | High: randomised test |
+| 2 | **Get mobile pages under 3 seconds** (images, lazy-loading, third-party scripts) | ~₹11 L | Medium: confirm with an A/B test |
+| 3 | **Product-specific landing pages for paid social** | ~₹3 L | Medium |
+| 4 | **Card retry + UPI fallback** on payment failure | ~₹2.6 L | Medium |
+| 5 | **Grow returning visitors** (post-purchase flows, saved carts) | Not sized | Low–medium |
+
+Values overlap (slow pages are mostly mobile), so they are not additive: a rough combined target for 1 + 2 is ₹35–40 L a year.
+
 ## 📊 Interactive dashboard
 
-[`dashboard/index.html`](dashboard/index.html) is a single file: download it and open it in any browser. It has KPI cards, a funnel you can
+**[Open the live dashboard](https://rahman17309.github.io/work/funnel-dashboard.html)**, or download [`dashboard/index.html`](dashboard/index.html) and open it in any browser. It has KPI cards, a funnel you can
 filter by segment, device/channel comparison, A/B lift with confidence intervals, opportunity sizing and the weekly trend.
 
 <img src="images/12_dashboard.png" width="70%"/>
@@ -111,6 +124,7 @@ filter by segment, device/channel comparison, A/B lift with confidence intervals
 │   ├── clean.py              # cleaning pipeline + validation (auditable log)
 │   └── build_dashboard.py    # builds dashboard/index.html
 ├── reports/
+│   ├── recommendations.md    # final report: prioritised fixes, ₹ sizing, risks, next tests
 │   └── data_quality_log.csv  # every cleaning rule and rows affected
 ├── images/                   # charts used in this README
 └── LEARNING.md               # day-by-day log of what was done and why
@@ -148,11 +162,18 @@ Every fix is logged in [`reports/data_quality_log.csv`](reports/data_quality_log
 
 Validation checks (all passing): no session skips a funnel stage; every purchase event has exactly one order.
 
+## ⚠️ Limitations
+
+- **Synthetic data**, calibrated to public e-commerce benchmarks. The pipeline, SQL and tests transfer directly to a real export.
+- **Festive-season test window** and possible **novelty effect**: the checkout lift should be monitored for 4–6 weeks after rollout.
+- **Session-level randomisation**: a returning user could see both versions; user-level assignment is cleaner.
+- **Opportunity sizes** use a "close half the gap" assumption and today's AOV/traffic, and overlap with each other.
+
 ## 🗓️ Roadmap
 
 - [x] **Day 1:** project setup, data dictionary, data-quality pipeline, EDA
 - [x] **Day 2:** SQL funnel deep-dive (DuckDB), segment analysis, A/B test with significance, interactive dashboard
-- [ ] **Day 3:** ₹-impact sizing, recommendations report, final README
+- [x] **Day 3:** recommendations report with ₹ sizing, risks and next experiments; final README; interview Q&A
 
 ---
 
